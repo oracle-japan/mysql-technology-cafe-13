@@ -4,6 +4,8 @@
 
 インストール方法は、[MySQL Operator for Kubernetes](https://github.com/mysql/mysql-operator)をベースとしてますが、一部カスタマイズしています。
 
+環境は、OCI（Oracle Cloud Infrastructure）前提となります。
+
 ## Installation of the MySQL Operator
 
 Namespace `mysql-operator` を作成します。
@@ -138,12 +140,12 @@ kind: PersistentVolumeClaim
 metadata:
   name: nfs-pvc
 spec:
-  storageClassName: nfs
+  storageClassName: "oci-bv"
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 50Gi
 ```
 
 マニフェストを適用します。
@@ -236,11 +238,11 @@ kubectl get services
 ```
 
 ```
-NAME                  TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)                               AGE
-kubernetes            ClusterIP      10.56.0.1     <none>           443/TCP                               3h14m
-mycluster             ClusterIP      10.56.7.48    <none>           6446/TCP,6448/TCP,6447/TCP,6449/TCP   173m
-mycluster-instances   ClusterIP      None          <none>           3306/TCP,33060/TCP,33061/TCP          173m
-nfs-service           ClusterIP      10.56.9.197   <none>           2049/TCP,20048/TCP,111/TCP            3h5m
+NAME                  TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)                               AGE
+kubernetes            ClusterIP   10.96.0.1     <none>        443/TCP                               46m
+mycluster             ClusterIP   10.96.78.48   <none>        6446/TCP,6448/TCP,6447/TCP,6449/TCP   23m
+mycluster-instances   ClusterIP   None          <none>        3306/TCP,33060/TCP,33061/TCP          23m
+nfs-service           ClusterIP   10.96.3.133   <none>        2049/TCP,20048/TCP,111/TCP            7m40s
 ```
 
 ### WordPress
@@ -310,6 +312,22 @@ WordPressのPersistentVolumeとPersistentVolumeClaimが連携していること�
 kubectl get persistentvolumes,persistentvolumeclaims
 ```
 
+```
+NAME                                                                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                         STORAGECLASS   REASON   AGE
+persistentvolume/csi-c53808cb-59ad-4d7a-b66e-b4270a8865f6                                                   50Gi       RWO            Delete           Bound    default/nfs-pvc               oci-bv                  5m27s
+persistentvolume/ocid1.volume.oc1.ap-osaka-1.abvwsljr7qxpebackkzjawgn2lvzuuexhyd6b3ptp6jcprrogmqkwuyuawzq   50Gi       RWO            Delete           Bound    default/datadir-mycluster-0   oci                     20m
+persistentvolume/ocid1.volume.oc1.ap-osaka-1.abvwsljrfjsqnzq2nsqzo3myni2nksdvnqsmdfltevu42mhmlbdriobfauqa   50Gi       RWO            Delete           Bound    default/datadir-mycluster-1   oci                     18m
+persistentvolume/ocid1.volume.oc1.ap-osaka-1.abvwsljrvoadedytyhdxcqef27lsaeiur4scdkpazfcnp25wbvkwdz7ncfgq   50Gi       RWO            Delete           Bound    default/datadir-mycluster-2   oci                     16m
+persistentvolume/wordpress-pv                                                                               50Gi       RWX            Delete           Bound    default/wordpress-pvc         wordpress               41s
+
+NAME                                        STATUS   VOLUME                                                                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+persistentvolumeclaim/datadir-mycluster-0   Bound    ocid1.volume.oc1.ap-osaka-1.abvwsljr7qxpebackkzjawgn2lvzuuexhyd6b3ptp6jcprrogmqkwuyuawzq   50Gi       RWO            oci            21m
+persistentvolumeclaim/datadir-mycluster-1   Bound    ocid1.volume.oc1.ap-osaka-1.abvwsljrfjsqnzq2nsqzo3myni2nksdvnqsmdfltevu42mhmlbdriobfauqa   50Gi       RWO            oci            18m
+persistentvolumeclaim/datadir-mycluster-2   Bound    ocid1.volume.oc1.ap-osaka-1.abvwsljrvoadedytyhdxcqef27lsaeiur4scdkpazfcnp25wbvkwdz7ncfgq   50Gi       RWO            oci            16m
+persistentvolumeclaim/nfs-pvc               Bound    csi-c53808cb-59ad-4d7a-b66e-b4270a8865f6                                                   50Gi       RWO            oci-bv         5m40s
+persistentvolumeclaim/wordpress-pvc         Bound    wordpress-pv                                                                               50Gi       RWX            wordpress      22s
+```
+
 WordPressのマニフェストを作成します。
 
 ```
@@ -370,6 +388,60 @@ WordPressのPodがRunnninngであることを確認します。
 
 ```
 kubectl get pods
+```
+
+```
+NAME                          READY   STATUS    RESTARTS   AGE
+mycluster-0                   2/2     Running   0          24m
+mycluster-1                   2/2     Running   0          22m
+mycluster-2                   2/2     Running   0          20m
+mycluster-router-x584w        1/1     Running   0          22m
+nfs-server-788c45b6f5-lfsx2   1/1     Running   0          10m
+wordpress-598746d47b-dpc47    1/1     Running   0          66s
+```
+
+WordPress Serviceのマニフェストを作成します。
+
+```
+vim wordpress-service.yaml
+```
+
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-service
+  labels:
+    app: wordpress
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  selector:
+    app: wordpress
+```
+
+マニフェストを適用します。
+
+```
+kubectl apply -f wordpress-service.yaml
+```
+
+EXTERNAL-IPが表示されます。実際にブラウザでアクセスすると、WordPressのセットアップ画面が表示されます。
+
+```
+kubectl get services
+```
+
+```
+NAME                  TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)                               AGE
+kubernetes            ClusterIP      10.96.0.1       <none>          443/TCP                               55m
+mycluster             ClusterIP      10.96.78.48     <none>          6446/TCP,6448/TCP,6447/TCP,6449/TCP   32m
+mycluster-instances   ClusterIP      None            <none>          3306/TCP,33060/TCP,33061/TCP          32m
+nfs-service           ClusterIP      10.96.3.133     <none>          2049/TCP,20048/TCP,111/TCP            16m
+wordpress-service     LoadBalancer   10.96.172.233   168.xx.xx.xx     80:32151/TCP                          44s
 ```
 
 ## WordPress Scale
