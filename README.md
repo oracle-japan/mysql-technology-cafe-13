@@ -126,36 +126,7 @@ Events:            <none>
 
 ### NFS Server
 
-NFSサーバを構築します。最初にPersistentVolumeを作成します。
-
-```
-vim nfs-pv.yaml
-```
-
-```
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: nfs-pv
-spec:
-  storageClassName: nfs
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  #「xxxxxx」を指定する定義
-  xxxxxx:
-    pdName: xxxxx
-    fsType: ext4
-```
-
-マニフェストを適用します。
-
-```
-kubectl apply -f nfs-pv.yaml
-```
-
-次に、PersistentVolumeClaimを作成します。
+NFSサーバを構築します。最初にPersistentVolumeClaimを作成します。
 
 ```
 vim nfs-pvc.yaml
