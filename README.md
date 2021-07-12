@@ -444,6 +444,198 @@ nfs-service           ClusterIP      10.96.3.133     <none>          2049/TCP,20
 wordpress-service     LoadBalancer   10.96.172.233   168.xx.xx.xx     80:32151/TCP                          44s
 ```
 
+## Connect to MySQL
+
+### 1.MySQL Operator Pod に接続してMySQL Shellを実行する場合
+
+```
+kubectl exec -it -n mysql-operator mysql-operator -- bash
+```
+
+MySQL Operator Pod からMySQL Shellを利用して mycluster-0 に接続します。
+
+パスワードが要求されるので、MySQLのSecretに設定したパスワードを入力します。
+
+```
+mysqlsh root@mycluster-o.mycluster-instances.default.svc.cluster.local
+```
+
+### 2. mycluster-0 に直接接続する場合
+
+```
+kubectl exec -it mycluster-0 -- bash
+```
+
+mycluster-0 でMySQL Shellを実行
+
+```
+mysqlsh --mysql localroot@localhost
+```
+
+### 3. MySQL Shellを利用できる専用クライアントPodから接続する場合
+
+```
+vim mysqlsh.yaml
+```
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+  name: mysqlsh
+spec:
+  containers:
+  - name: mysqlsh
+    image: cyberblack28/mysqlsh:1.0
+    command: ["tail", "-f", "/dev/null"]
+```
+
+```
+kubectl apply -f mysqlsh.yaml
+```
+
+```
+kubectl get pods
+```
+```
+NAME                           READY   STATUS    RESTARTS   AGE
+mycluster-0                    2/2     Running   0          3h36m
+mycluster-1                    2/2     Running   0          3h33m
+mycluster-2                    2/2     Running   0          3h31m
+mycluster-router-64bqs         1/1     Running   0          3h33m
+mysqlsh                        1/1     Running   0          8m23s
+nfs-server-788c45b6f5-b2db2    1/1     Running   0          3h33m
+wordpress-598746d47b-c8wm5     1/1     Running   0          3h31m
+```
+
+```
+kubectl exec -it mysqlsh -- bash
+```
+
+```
+mysqlsh --host=<mycluster Service ClusterIP> --port=6446 --user=root --password=mysqlp@ssword
+```
+
+MySQL Shellを終了する場合
+
+```
+\quit
+```
+```
+Bye!
+```
+
+mysqlshコンテナからexit
+
+```
+exit
+```
+
+## Sample Application Deploy
+
+```
+cd nodetestapp
+```
+
+ご自身のイメージリポジトリを指定します。
+
+```
+docker image build -t <イメージレポジトリ名>/nodetestapp:1.0
+```
+
+```
+docker image push <イメージレポジトリ名>/nodetestapp:1.0
+```
+
+Pullするご自身のイメージレポジトリに変更します。
+
+```
+vim nodetestapp.yaml
+```
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: node-auth
+type: kubernetes.io/basic-auth
+stringData:
+  username: node
+  password: pass
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodetestapp
+  labels:
+    app: nodetestapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodetestapp-pod
+  template:
+    metadata:
+      labels:
+        app: nodetestapp-pod
+    spec:
+      containers:
+      - name: nodetestapp
+        image: <イメージレポジトリ名>/nodetestapp:1.0
+        ports:
+          - containerPort: 8181
+        env:
+        - name: MYSQL_SERVICE_NAME
+          value: "mycluster"
+        - name: MYSQL_SERVICE_PORT
+          value: "mysqlx"
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: node-auth
+              key: username
+        - name: MYSQL_PASS
+          valueFrom:
+            secretKeyRef:
+              name: node-auth
+              key: password
+      restartPolicy: Always 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nodetestapp
+  name: nodetestapp-service
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8181
+    nodePort: 30007
+  selector:
+    app: nodetestapp-pod
+  type: LoadBalancer
+```
+
+```
+kubectl apply -f nodetestapp.yaml
+```
+
+```
+kubectl get pods
+
+```
+```
+NAME                           READY   STATUS    RESTARTS   AGE
+mycluster-0                    2/2     Running   0          3h36m
+mycluster-1                    2/2     Running   0          3h33m
+mycluster-2                    2/2     Running   0          3h31m
+mycluster-router-64bqs         1/1     Running   0          3h33m
+mysqlsh                        1/1     Running   0          8m23s
+nfs-server-788c45b6f5-b2db2    1/1     Running   0          3h33m
+nodetestapp-7b8dbd44b6-8xjhq   1/1     Running   0          149m
+wordpress-598746d47b-c8wm5     1/1     Running   0          3h31m
+```
+
 ## WordPress Scale
 
 WordPressのPod数を10に変更してスケールします。
