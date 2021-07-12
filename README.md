@@ -616,13 +616,16 @@ spec:
   type: LoadBalancer
 ```
 
+サンプルアプリケーションを適用します。
+
 ```
 kubectl apply -f nodetestapp.yaml
 ```
 
+nodetestappのPodがRunningになっていることを確認します。
+
 ```
 kubectl get pods
-
 ```
 ```
 NAME                           READY   STATUS    RESTARTS   AGE
