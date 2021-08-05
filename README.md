@@ -614,7 +614,7 @@ OCIダッシュボードで、Block Volumeが追加されていることも確�
 
 WordPressで使用しているNFSのものを含めて、6 Block Volumeとなります。
 
-![block Volume](image/blockvolume.png "block Volume")
+![Block Volume](image/blockvolume.png "block Volume")
 
 ### Scale In
 
@@ -1561,7 +1561,9 @@ dump-test-oci   mysql     Completed   dump-test-oci-20210805-081617   12s
 dump-test1      mysql     Completed   dump-test1-20210805-081434      115s
 ```
 
-Object StorageにバックアップされているかをOCIダッシュボードからも確認します。
+Object StorageにバックアップされているかをOCIダッシュボードからも確認できます。
+
+![Object Storage](image/backup.png "backup object storage")
 
 完了したPod、Jobも確認してみます。
 
