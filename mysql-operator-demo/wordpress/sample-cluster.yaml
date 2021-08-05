@@ -4,6 +4,8 @@ metadata:
   name: mycluster
 spec:
   secretName: mypwds
-  instances: 6
+  instances: 3
+  version: "8.0.25"
   router:
     instances: 1
+    version: "8.0.25"

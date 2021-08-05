@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: backup-volume
+  namespace: mysql-cluster
+  labels:
+    type: local
+spec:
+  storageClassName: ""
+  claimRef:
+    name: backup-volume-claim-1
+    namespace: mysql-cluster
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/backupdir
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-volume-claim-1
+  namespace: mysql-cluster
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---

@@ -5,11 +5,12 @@ metadata:
   labels:
     type: local
 spec:
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: wordpress
   capacity:
-    storage: 10Gi
+    storage: 50Gi
   accessModes:
     - ReadWriteMany
   nfs:
-    server: xx.xx.xx.xx #「nfs-service」のCLUSTER-IPを定義
+    server: 10.96.189.130
     path: /
