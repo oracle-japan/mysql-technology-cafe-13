@@ -1523,7 +1523,18 @@ mysql-router-xxxxx                 1/1     Running     0          45m
 
 ### Backup to Object Storage
 
-Object Storageをコンソールから作成（idbcluster_backup）しておきます。
+Object Storageをコンソールから作成しておきます。
+
+[Storage]-[Buckets]を選択して、「Create Bucket」ボタンをクリックします。
+
+![Create Bucket](image/create-buket-01.png "Create Bucket")
+
+「Bucket Name」に任意の名前を入力して、「Create」ボタンをクリックします。
+ここでは、idbcluster_backup とします。
+
+![Create Bucket](image/create-buket-02.png "Create Bucket")
+
+![Create Bucket](image/create-buket-03.png "Create Bucket")
 
 Object Storageにバックアップするマニフェストを作成します。
 
