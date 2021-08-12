@@ -1534,6 +1534,8 @@ Object Storageをコンソールから作成しておきます。
 
 ![Create Bucket](image/create-buket-02.png "Create Bucket")
 
+作成されたことを確認します。
+
 ![Create Bucket](image/create-buket-03.png "Create Bucket")
 
 Object Storageにバックアップするマニフェストを作成します。
