@@ -295,6 +295,7 @@ metadata:
   labels:
     type: local
 spec:
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: wordpress
   capacity:
     storage: 10Gi
@@ -610,7 +611,7 @@ nfs-server-788c45b6f5-chp4k   1/1     Running   0          16m
 wordpress-598746d47b-wfffq    1/1     Running   0          12m
 ```
 
-OCIダッシュボードで、Block Volumeが追加されていることも確認できます。
+OCIコンソールで、Block Volumeが追加されていることも確認できます。
 
 WordPressで使用しているNFSのものを含めて、6 Block Volumeとなります。
 
@@ -1574,7 +1575,7 @@ dump-test-oci   mysql     Completed   dump-test-oci-20210805-081617   12s
 dump-test1      mysql     Completed   dump-test1-20210805-081434      115s
 ```
 
-Object StorageにバックアップされているかをOCIダッシュボードからも確認できます。
+Object Storageにバックアップさコンソールからも確認できます。
 
 ![Object Storage](image/backup.png "backup object storage")
 
